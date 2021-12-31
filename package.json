@@ -1,0 +1,22 @@
+{
+  "name": "ahlelquran-auth",
+  "version": "1.0.0",
+  "description": "authentication api for ahlelquran-academy",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "JWT",
+    "MySql"
+  ],
+  "author": "ibrahimElmourchidi",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "express": "^4.17.2",
+    "express-validator": "^6.14.0",
+    "jsonwebtoken": "^8.5.1",
+    "mysql": "^2.18.1"
+  }
+}
