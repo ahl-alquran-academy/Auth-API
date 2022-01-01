@@ -9,7 +9,7 @@ let express = require("express");
  * app
  */
 let app = express();
-
+app.use(express.json());
 /**
  * after creating the app lets now manage our routes, we can put all
  * of our routes in this script, but its a best practice to isolate
@@ -19,7 +19,7 @@ let app = express();
 const auth = require("./routes/auth");
 app.use("/auth", auth);
 app.all("/", (req, res) => {
-  res.redirect("/auth");
+  return res.redirect("/auth");
 });
 
 // now lets assign aport for the app to listen on to

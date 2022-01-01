@@ -1,30 +1,112 @@
-/**
- * to use this module as arouter module we need to use express.Router()
- * to create router object and then export this router object
- */
+const { check, validationResult } = require("express-validator");
+const bcrypt = require("bcrypt");
+const JWT = require("jsonwebtoken");
+connectionString = {
+  host: "mysql-64324-0.cloudclusters.net",
+  port: 19984,
+  user: "ibrahimElmourchidi",
+  password: "12345678",
+  database: "authdb",
+};
+const db = require("../middleware/db");
+const dbManager = db(connectionString);
+const Mailer = require("../middleware/mail");
+
 const router = require("express").Router();
 module.exports = router;
-/**
- * the router object have few method for handling the incomming requests:
- *      1.all: this will be invoked when a request is made to the given route,
- *      despite of the request method
- *      2. get: this will be invoked  when a get request is made to the given
- *      route
- *      3. post: this will be invoked  when a post request is made to the given
- *      route
- *      4. put: this will be invoked  when a put request is made to the given
- *      route
- *      5. delete: this will be invoked  when a delete request is made to the
- *      given route.
- * each of these method takes 2 basic parameters :
- *      1. route
- *      2. call back.
- */
 
 router.get("/", (req, res) => {
-  res.send("<h1>hello from the auth script</h1>");
+  return res.status(200).send("<h1>hello from the auth script</h1>");
 });
 
-router.post("/signup", (req, res) => {
-  res.send("signup page");
+router.post(
+  "/signup",
+  [
+    check("userEmail", "البريد الالكتروني غير صحيح").isEmail(),
+    check("userPassword", "من فضلك ادخل كلمة مرور من 8-30 حرف").isLength({
+      min: 8,
+      max: 30,
+    }),
+    check("userName", "ادخل اسم مستخدم من 3-50 حرف").isLength({
+      min: 3,
+      max: 50,
+    }),
+    check("userTelegram", "رقم التيليجرام طوله من 11-25 حروف فقط")
+      .isLength({ min: 11, max: 25 })
+      .isNumeric(),
+  ],
+  async (req, res) => {
+    //validate user data
+    const validationError = validationResult(req);
+    if (!validationError.isEmpty())
+      return res.status(400).json(validationError);
+    //extract user data from request body
+    let { userName, userEmail, userPassword, userTelegram } = req.body;
+    // check if the user email already registered
+    try {
+      sqlString = `SELECT * FROM User WHERE email ='${userEmail}'`;
+      var isExist = await dbManager.excute(sqlString);
+    } catch (error) {
+      return res.status(400).json(new ErrorMsg("DBError", error));
+    }
+    if (Array.from(isExist).length) {
+      return res
+        .status(400)
+        .json(new ErrorMsg("DBError", "User Already Exist"));
+    }
+    // generate an activation code
+    const activationCode = await createActivationCode();
+    //send activation code by email
+    try {
+      Mailer(userEmail, "acitvate account", activationCode);
+    } catch (error) {
+      console.log(error);
+      return res
+        .status(400)
+        .json(new ErrorMsg("MailError", "mail sending error"));
+    }
+    // hash the user password
+    let hashedPassword = await bcrypt.hash(userPassword, 5);
+    // save user to the database
+    sqlString = `INSERT INTO User (ID, UserName, Telegram, Email, Password, ActivationCode) VALUES (NULL, '${userName}', '${userTelegram}', '${userEmail}', '${hashedPassword}', '${activationCode}');`;
+    try {
+      await dbManager.excute(sqlString);
+    } catch (error) {
+      return res.status(400).json(new ErrorMsg("DBError", error));
+    }
+    return res
+      .status(200)
+      .json(new ErrorMsg("successfull", "User Was Created"));
+  }
+);
+
+router.post("/all", async (req, res) => {
+  try {
+    let sqlString = "SELECT ID, UserName FROM User";
+    let allUsers = await dbManager.excute(sqlString);
+    return res.status(200).json(allUsers);
+  } catch (error) {
+    return res.status(400).json(error);
+  }
 });
+
+//Error message builder
+function ErrorMsg(type, msg) {
+  this.param = type;
+  this.msg = msg;
+  return { errors: [this] };
+}
+
+// create activation code
+function createActivationCode() {
+  return new Promise((resolve, reject) => {
+    var result = "";
+    var characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var charactersLength = characters.length;
+    for (var i = 0; i < 5; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    resolve(result);
+  });
+}
