@@ -4,11 +4,13 @@
  * express package, and create an app
  */
 let express = require("express");
+let cors = require("cors");
 /**
  * the express package returns afunction that when invoked create the express
  * app
  */
 let app = express();
+app.use(cors());
 app.use(express.json());
 /**
  * after creating the app lets now manage our routes, we can put all
