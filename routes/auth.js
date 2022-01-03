@@ -46,13 +46,19 @@ router.post(
     try {
       sqlString = `SELECT * FROM User WHERE Email ='${userEmail}' OR Telegram= '${userTelegram}'`;
       var isExist = await dbManager.excute(sqlString);
+      var user = isExist[0];
+      console.log(user);
     } catch (error) {
       return res.status(200).json(new ErrorMsg("DBError", error));
     }
     if (Array.from(isExist).length) {
+      if (user.Telegram == userTelegram)
+        return res
+          .status(200)
+          .json(new ErrorMsg("DBError", "Telegram Already Exist"));
       return res
         .status(200)
-        .json(new ErrorMsg("DBError", "Email or Telegram Already Exist"));
+        .json(new ErrorMsg("DBError", "Email Already Exist"));
     }
     // generate an activation code
     const activationCode = await createActivationCode();
