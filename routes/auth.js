@@ -82,8 +82,6 @@ router.post(
 
 // login route
 router.post("/login", async (req, res) => {
-  req.header("Access-Control-Allow-Origin", true);
-  res.header("Access-Control-Allow-Origin", true);
   let { userEmail, userPassword } = req.body;
   try {
     let sqlString = `SELECT * FROM User Where email = '${userEmail}'`;
