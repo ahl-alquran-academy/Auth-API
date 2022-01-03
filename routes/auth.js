@@ -18,7 +18,7 @@ module.exports = router;
 router.get("/", (req, res) => {
   return res.status(200).send("<h1>hello from the auth script</h1>");
 });
-
+//signup route
 router.post(
   "/signup",
   [
@@ -39,7 +39,7 @@ router.post(
     //validate user data
     const validationError = validationResult(req);
     if (!validationError.isEmpty())
-      return res.status(400).json(validationError);
+      return res.status(200).json(validationError);
     //extract user data from request body
     let { userName, userEmail, userPassword, userTelegram } = req.body;
     // check if the user email already registered
@@ -47,11 +47,11 @@ router.post(
       sqlString = `SELECT * FROM User WHERE email ='${userEmail}'`;
       var isExist = await dbManager.excute(sqlString);
     } catch (error) {
-      return res.status(400).json(new ErrorMsg("DBError", error));
+      return res.status(200).json(new ErrorMsg("DBError", error));
     }
     if (Array.from(isExist).length) {
       return res
-        .status(400)
+        .status(200)
         .json(new ErrorMsg("DBError", "User Already Exist"));
     }
     // generate an activation code
@@ -62,7 +62,7 @@ router.post(
     } catch (error) {
       console.log(error);
       return res
-        .status(400)
+        .status(200)
         .json(new ErrorMsg("MailError", "mail sending error"));
     }
     // hash the user password
@@ -72,7 +72,7 @@ router.post(
     try {
       await dbManager.excute(sqlString);
     } catch (error) {
-      return res.status(400).json(new ErrorMsg("DBError", error));
+      return res.status(200).json(new ErrorMsg("DBError", error));
     }
     return res
       .status(200)
@@ -89,7 +89,7 @@ router.post("/login", async (req, res) => {
     let result = await dbManager.excute(sqlString);
     user = result[0];
   } catch (error) {
-    return res.status(400).json(new ErrorMsg("DBError", error));
+    return res.status(200).json(new ErrorMsg("DBError", error));
   }
   correctPass = await bcrypt.compare(userPassword, user.Password);
   if (!correctPass) {
@@ -110,7 +110,7 @@ router.post("/all", async (req, res) => {
     let allUsers = await dbManager.excute(sqlString);
     return res.status(200).json(allUsers);
   } catch (error) {
-    return res.status(400).json(new ErrorMsg("DBError", error));
+    return res.status(200).json(new ErrorMsg("DBError", error));
   }
 });
 
