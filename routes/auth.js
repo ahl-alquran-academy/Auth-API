@@ -44,7 +44,7 @@ router.post(
     let { userName, userEmail, userPassword, userTelegram } = req.body;
     // check if the user email already registered
     try {
-      sqlString = `SELECT * FROM User WHERE email ='${userEmail}'`;
+      sqlString = `SELECT * FROM User WHERE Email ='${userEmail}' OR Telegram= '${userTelegram}'`;
       var isExist = await dbManager.excute(sqlString);
     } catch (error) {
       return res.status(200).json(new ErrorMsg("DBError", error));
@@ -52,7 +52,7 @@ router.post(
     if (Array.from(isExist).length) {
       return res
         .status(200)
-        .json(new ErrorMsg("DBError", "User Already Exist"));
+        .json(new ErrorMsg("DBError", "Email or Telegram Already Exist"));
     }
     // generate an activation code
     const activationCode = await createActivationCode();
@@ -74,9 +74,7 @@ router.post(
     } catch (error) {
       return res.status(200).json(new ErrorMsg("DBError", error));
     }
-    return res
-      .status(200)
-      .json(new ErrorMsg("successfull", "User Was Created"));
+    return res.status(200).send(ok);
   }
 );
 
