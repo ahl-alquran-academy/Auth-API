@@ -11,6 +11,7 @@ connectionString = {
 const db = require("../middleware/db");
 const dbManager = db(connectionString);
 const Mailer = require("../middleware/mail");
+const SqlString = require("mysql/lib/protocol/SqlString");
 
 const router = require("express").Router();
 module.exports = router;
@@ -78,7 +79,7 @@ router.post(
       await Mailer(
         userEmail,
         "Welcome To Ahlelquran",
-        `to acitvate account click on this link : https://ahlelquran-academy.web.app/activate/${userID}/${activationCode}`
+        `to acitvate account click on this link : https://ahlelquran-academy.web.app/auth/activate/${userID}/${activationCode}`
       );
     } catch (error) {
       console.log(error);
@@ -114,12 +115,47 @@ router.post("/login", async (req, res) => {
   res.status(200).json(response);
 });
 
+// get all users route
 router.post("/all", async (req, res) => {
   try {
     let sqlString = "SELECT ID, UserName FROM User";
     let allUsers = await dbManager.excute(sqlString);
     return res.status(200).json(allUsers);
   } catch (error) {
+    return res.status(200).json(new ErrorMsg("DBError", error));
+  }
+});
+
+//activation route
+router.post("/activate", async (req, res) => {
+  // get the id and the code
+  let { id, code } = req.body;
+  // check if user exist
+  try {
+    sqlString = `SELECT * FROM User WHERE ID = ${id}`;
+    let result = await dbManager.excute(sqlString);
+    var user = result[0];
+  } catch (err) {
+    return res.status(200).json(new ErrorMsg("DBError", error));
+  }
+  if (!user)
+    return res.status(200).json(new ErrorMsg("DBError", "user not found"));
+  if (user.ActivationCode != code)
+    return res
+      .status(200)
+      .json(new ErrorMsg("DBError", "wrong Activation code"));
+  try {
+    sqlString = `UPDATE User SET Policy = '100' WHERE User.ID = '${id}';`;
+    console.log("editing");
+    await dbManager.excute(sqlString);
+    sqlString = `SELECT * FROM Student  WHERE User_ID = '${id}'`;
+    let result = await dbManager.excute(sqlString);
+    if (Array.from(result).length) return res.status(200).send("ok");
+    sqlString = `INSERT INTO Student (User_ID) VALUES ('${id}')`;
+    await dbManager.excute(sqlString);
+    return res.status(200).send("ok");
+  } catch (error) {
+    console.log(error);
     return res.status(200).json(new ErrorMsg("DBError", error));
   }
 });
