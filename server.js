@@ -13,8 +13,9 @@ const cookieParser = require("cookie-parser");
 let app = express();
 app.use(
   cors({
-    origin: "*",
-    credentials: true,
+    origin: ["https://ahlelquran-academy.web.app/", "*"],
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: "true",
   })
 );
 app.use(express.json());
