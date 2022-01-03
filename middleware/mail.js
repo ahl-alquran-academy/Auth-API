@@ -13,7 +13,7 @@ function sendMail(email, subject, code) {
     from: "elmourchiditest@gmail.com",
     to: email,
     subject: subject,
-    text: `your activation code is:  ${code}`,
+    text: `${code}`,
   };
   return new Promise((resolve, reject) => {
     transporter.sendMail(mailOptions, (error, data) => {

@@ -47,7 +47,6 @@ router.post(
       sqlString = `SELECT * FROM User WHERE Email ='${userEmail}' OR Telegram= '${userTelegram}'`;
       var isExist = await dbManager.excute(sqlString);
       var user = isExist[0];
-      console.log(user);
     } catch (error) {
       return res.status(200).json(new ErrorMsg("DBError", error));
     }
@@ -62,25 +61,32 @@ router.post(
     }
     // generate an activation code
     const activationCode = await createActivationCode();
-    //send activation code by email
-    try {
-      await Mailer(userEmail, "acitvate account", activationCode);
-    } catch (error) {
-      console.log(error);
-      return res
-        .status(200)
-        .json(new ErrorMsg("MailError", "mail sending error"));
-    }
     // hash the user password
     let hashedPassword = await bcrypt.hash(userPassword, 5);
     // save user to the database
     sqlString = `INSERT INTO User (ID, UserName, Telegram, Email, Password, ActivationCode) VALUES (NULL, '${userName}', '${userTelegram}', '${userEmail}', '${hashedPassword}', '${activationCode}');`;
     try {
       await dbManager.excute(sqlString);
+      sqlString = `SELECT * FROM User WHERE Email ='${userEmail}' OR Telegram= '${userTelegram}'`;
+      newUser = await dbManager.excute(sqlString);
+      var userID = newUser[0].ID;
     } catch (error) {
       return res.status(200).json(new ErrorMsg("DBError", error));
     }
-    return res.status(200).send("ok");
+    //send activation code by email
+    try {
+      await Mailer(
+        userEmail,
+        "Welcome To Ahlelquran",
+        `to acitvate account click on this link : https://ahlelquran-academy.web.app/activate/${userID}/${activationCode}`
+      );
+    } catch (error) {
+      console.log(error);
+      return res
+        .status(200)
+        .json(new ErrorMsg("MailError", "mail sending error"));
+    }
+    return res.status(200).send({ userID });
   }
 );
 
