@@ -74,7 +74,7 @@ router.post(
     } catch (error) {
       return res.status(200).json(new ErrorMsg("DBError", error));
     }
-    return res.status(200).send(ok);
+    return res.status(200).send("ok");
   }
 );
 
