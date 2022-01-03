@@ -14,7 +14,7 @@ let app = express();
 app.use(
   cors({
     // origin: /https:\/\/ahlelquran-academy\.web\.app\//gm,
-    origin: ["http://localhost:4200"],
+    origin: true,
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: "true",
   })
