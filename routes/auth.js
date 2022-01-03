@@ -58,7 +58,7 @@ router.post(
     const activationCode = await createActivationCode();
     //send activation code by email
     try {
-      Mailer(userEmail, "acitvate account", activationCode);
+      await Mailer(userEmail, "acitvate account", activationCode);
     } catch (error) {
       console.log(error);
       return res
@@ -80,13 +80,46 @@ router.post(
   }
 );
 
+// login route
+router.post("/login", async (req, res) => {
+  let { userEmail, userPassword } = req.body;
+  try {
+    let sqlString = `SELECT * FROM User Where email = '${userEmail}'`;
+    var result = await dbManager.excute(sqlString);
+  } catch (error) {
+    return res.status(400).json(new ErrorMsg("DBError", error));
+  }
+  if (!Array.from(result).length)
+    return res.send(new ErrorMsg("DBError", "Invalid Credentials"));
+  let user = result[0];
+  // compare the password
+  let correctPass = await bcrypt.compare(user.Password, userPassword);
+  if (!correctPass)
+    return res.send(new ErrorMsg("DBError", "Invalid Credentials"));
+  let token = await JWT.sign(
+    {
+      userID: user.ID,
+    },
+    "isafe",
+    { expiresIn: 360000 }
+  );
+  console.log("hi there");
+  let userCookie = {
+    userId: user.ID,
+    userName: user.UserName,
+    token: token,
+  };
+  res.cookie("userPassport", userCookie);
+  res.status(200).json(new ErrorMsg("done", "User Logged in"));
+});
+
 router.post("/all", async (req, res) => {
   try {
     let sqlString = "SELECT ID, UserName FROM User";
     let allUsers = await dbManager.excute(sqlString);
     return res.status(200).json(allUsers);
   } catch (error) {
-    return res.status(400).json(error);
+    return res.status(400).json(new ErrorMsg("DBError", error));
   }
 });
 
@@ -94,7 +127,7 @@ router.post("/all", async (req, res) => {
 function ErrorMsg(type, msg) {
   this.param = type;
   this.msg = msg;
-  return { errors: [this] };
+  return { Errors: [this] };
 }
 
 // create activation code

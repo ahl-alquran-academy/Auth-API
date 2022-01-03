@@ -5,13 +5,20 @@
  */
 let express = require("express");
 let cors = require("cors");
+const cookieParser = require("cookie-parser");
 /**
  * the express package returns afunction that when invoked create the express
  * app
  */
 let app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
 /**
  * after creating the app lets now manage our routes, we can put all
  * of our routes in this script, but its a best practice to isolate
