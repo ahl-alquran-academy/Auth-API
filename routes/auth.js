@@ -12,6 +12,8 @@ const db = require("../middleware/db");
 const dbManager = db(connectionString);
 const Mailer = require("../middleware/mail");
 const SqlString = require("mysql/lib/protocol/SqlString");
+const { append } = require("express/lib/response");
+const { response } = require("express");
 
 const router = require("express").Router();
 module.exports = router;
@@ -163,6 +165,31 @@ router.post("/activate", async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(200).json(new ErrorMsg("DBError", error));
+  }
+});
+
+//get self data
+router.post("/getselfData", async (req, res) => {
+  let { token } = req.body;
+  try {
+    var isVerified = JWT.verify(token, "isafe");
+  } catch (error) {
+    return res.status(200).json(new ErrorMsg("Token Error", "Invalid Token"));
+  }
+  let { userID } = isVerified;
+  try {
+    sqlString = `SELECT * FROM User WHERE ID = '${userID}'`;
+    let result = await dbManager.excute(sqlString);
+    if (!Array.from(result).length)
+      return res.status(200).json(new ErrorMsg("DBError", "User Not Found"));
+    let userObject = result[0];
+    return res.status(200).json({
+      userID: userObject.ID,
+      userName: userObject.UserName,
+      token: await JWT.sign({ userID: userObject.ID }, "isafe"),
+    });
+  } catch (error) {
+    return res.status(200).send(new ErrorMsg("DBError", error));
   }
 });
 
