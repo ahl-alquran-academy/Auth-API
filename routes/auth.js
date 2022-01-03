@@ -130,6 +130,7 @@ router.post("/all", async (req, res) => {
 router.post("/activate", async (req, res) => {
   // get the id and the code
   let { id, code } = req.body;
+  let token = await JWT.sign({ userID: id }, "isafe");
   // check if user exist
   try {
     sqlString = `SELECT * FROM User WHERE ID = ${id}`;
@@ -138,6 +139,11 @@ router.post("/activate", async (req, res) => {
   } catch (err) {
     return res.status(200).json(new ErrorMsg("DBError", error));
   }
+  var response = {
+    userID: id,
+    userName: user.UserName,
+    token,
+  };
   if (!user)
     return res.status(200).json(new ErrorMsg("DBError", "user not found"));
   if (user.ActivationCode != code)
@@ -150,10 +156,10 @@ router.post("/activate", async (req, res) => {
     await dbManager.excute(sqlString);
     sqlString = `SELECT * FROM Student  WHERE User_ID = '${id}'`;
     let result = await dbManager.excute(sqlString);
-    if (Array.from(result).length) return res.status(200).json("ok");
+    if (Array.from(result).length) return res.status(200).json(response);
     sqlString = `INSERT INTO Student (User_ID) VALUES ('${id}')`;
     await dbManager.excute(sqlString);
-    return res.status(200).json("ok");
+    return res.status(200).json(response);
   } catch (error) {
     console.log(error);
     return res.status(200).json(new ErrorMsg("DBError", error));
