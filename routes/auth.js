@@ -82,35 +82,26 @@ router.post(
 
 // login route
 router.post("/login", async (req, res) => {
+  var user;
   let { userEmail, userPassword } = req.body;
   try {
     let sqlString = `SELECT * FROM User Where email = '${userEmail}'`;
-    var result = await dbManager.excute(sqlString);
+    let result = await dbManager.excute(sqlString);
+    user = result[0];
   } catch (error) {
     return res.status(400).json(new ErrorMsg("DBError", error));
   }
-  if (!Array.from(result).length)
+  correctPass = await bcrypt.compare(userPassword, user.Password);
+  if (!correctPass) {
     return res.send(new ErrorMsg("DBError", "Invalid Credentials"));
-  let user = result[0];
-  // compare the password
-  let correctPass = await bcrypt.compare(user.Password, userPassword);
-  if (!correctPass)
-    return res.send(new ErrorMsg("DBError", "Invalid Credentials"));
-  let token = await JWT.sign(
-    {
-      userID: user.ID,
-    },
-    "isafe",
-    { expiresIn: 360000 }
-  );
-  console.log("hi there");
-  let userCookie = {
+  }
+  let token = await JWT.sign({ userID: user.ID }, "isafe");
+  let response = {
     userId: user.ID,
     userName: user.UserName,
     token: token,
   };
-  res.cookie("userPassport", userCookie);
-  res.status(200).json(new ErrorMsg("done", "User Logged in"));
+  res.status(200).json(response);
 });
 
 router.post("/all", async (req, res) => {
