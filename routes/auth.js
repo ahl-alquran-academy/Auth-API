@@ -150,10 +150,10 @@ router.post("/activate", async (req, res) => {
     await dbManager.excute(sqlString);
     sqlString = `SELECT * FROM Student  WHERE User_ID = '${id}'`;
     let result = await dbManager.excute(sqlString);
-    if (Array.from(result).length) return res.status(200).send("ok");
+    if (Array.from(result).length) return res.status(200).json("ok");
     sqlString = `INSERT INTO Student (User_ID) VALUES ('${id}')`;
     await dbManager.excute(sqlString);
-    return res.status(200).send("ok");
+    return res.status(200).json("ok");
   } catch (error) {
     console.log(error);
     return res.status(200).json(new ErrorMsg("DBError", error));
